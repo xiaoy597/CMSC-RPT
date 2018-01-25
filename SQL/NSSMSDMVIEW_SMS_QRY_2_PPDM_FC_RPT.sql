@@ -1,17 +1,17 @@
 REPLACE VIEW ${NSSMSDMVIEW}.SMS_QRY_2_PPDM_FC_RPT (
-STAT_DATE
-,PPDM_CDE
-,PPDM_NAME
-,COMP_CNT
-,BRH_CNT
-,EMPLY_CNT
-,TOT_ASET
-,NET_ASET
-,BIZ_ENING
-,BIZ_SUPT
-,PRFT_TOT_AMT
-,NET_PRFT
-,NET_CAPTL_TOT_AMT
+STAT_DATE                -- '统计月份'
+,PPDM_CDE                -- '辖区代码'          
+,PPDM_NAME               -- '辖区名称'          
+,COMP_CNT                -- '公司家数'          
+,BRH_CNT                 -- '营业部家数'        
+,EMPLY_CNT               -- '期货公司就业人员数'
+,TOT_ASET                -- '期货公司总资产'    
+,NET_ASET                -- '期货公司净资产'    
+,BIZ_ENING               -- '期货公司营业收入'  
+,BIZ_SUPT                -- '期货公司营业支出'  
+,PRFT_TOT_AMT            -- '期货公司利润总额'  
+,NET_PRFT                -- '期货公司净利润'    
+,NET_CAPTL_TOT_AMT       -- '期货公司净资本总额'
 )
 AS SELECT 
 STAT_DATE                                                 (TITLE '统计月份')                                

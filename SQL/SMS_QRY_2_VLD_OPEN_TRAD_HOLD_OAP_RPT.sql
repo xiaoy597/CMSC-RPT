@@ -121,7 +121,7 @@ FROM
 		AND a1.SHDR_ACCT NOT IN ('B880859746','B880810718','B880969127','B880969135')											
 		AND a1.TRANS_TYPE IN ('00A','001') 									
 		AND a1.negt_type = '0'									
-		AND a1.TRANS_VOL <> '0'									
+		AND a1.TRANS_VOL <> 0									
 		AND a1.trad_date = '${TXDATE}'										
 		AND c1.SEC_CTG = '11' AND c1.MKT_SORT='0'
 	UNION ALL	
@@ -138,7 +138,7 @@ FROM
 		AND c1.SEC_CTG = '11'										
 		AND c1.MKT_SORT = '1'										
 		AND a1.SHDR_ACCT <> '0088888889'										
-		AND a1.trad_vol <> '0'										
+		AND a1.trad_vol <> 0										
 		AND a1.trad_date = '${TXDATE}'	
 	) a		
 	INNER JOIN ${NSOVIEW}.CSDC_INTG_UAP_SEC_ACCT b
