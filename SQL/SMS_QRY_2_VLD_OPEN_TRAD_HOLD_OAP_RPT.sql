@@ -115,7 +115,7 @@ FROM
 		,${NSOVIEW}.CSDC_INTG_SEC_INFO c1											
 	WHERE 
 		c1.s_date <= '${TXDATE}' AND c1.e_date > '${TXDATE}'	        										
-		AND a1.SEC_CDE = c1.sec_cde											
+		AND SUBSTR(CAST(1000000+a1.SEC_CDE AS CHAR(7)),2) = c1.sec_cde											
 		AND a1.cap_type = 'PT' AND a1.negt_type = '0'												
 		AND a1.EQUT_TYPE NOT IN ('DF', 'DX', 'HL')												
 		AND a1.SHDR_ACCT NOT IN ('B880859746','B880810718','B880969127','B880969135')											
@@ -134,7 +134,7 @@ FROM
 		,${NSOVIEW}.CSDC_INTG_SEC_INFO c1											
 	WHERE 
 		c1.s_date <= '${TXDATE}' AND c1.e_date > '${TXDATE}'										
-		AND a1.SEC_CDE = c1.sec_cde												
+		AND SUBSTR(CAST(1000000+a1.SEC_CDE AS CHAR(7)),2) = c1.sec_cde												
 		AND c1.SEC_CTG = '11'										
 		AND c1.MKT_SORT = '1'										
 		AND a1.SHDR_ACCT <> '0088888889'										
@@ -172,8 +172,8 @@ FROM
 	AND d1.e_date > b1.TRAD_DATE 
 	AND C1.s_date <= b1.TRAD_DATE 
 	AND C1.e_date > b1.TRAD_DATE 
-	AND a1.SEC_CDE = b1.SEC_CDE 
-	AND a1.SEC_CDE = c1.SEC_CDE 
+	AND SUBSTR(CAST(1000000+a1.SEC_CDE AS CHAR(7)),2) = b1.SEC_CDE 
+	AND SUBSTR(CAST(1000000+a1.SEC_CDE AS CHAR(7)),2) = c1.SEC_CDE 
 	AND B1.MKT_SORT=C1.MKT_SORT 
 	AND B1.MKT_SORT='0' 
 	AND a1.cap_type = d1.cap_type 
@@ -205,8 +205,8 @@ UNION ALL
 	AND d1.s_date <= b1.TRAD_DATE AND d1.e_date > b1.TRAD_DATE 
 	AND C1.s_date <= b1.TRAD_DATE 
 	AND C1.e_date > b1.TRAD_DATE 
-	AND a1.SEC_CDE = b1.SEC_CDE 
-	AND a1.SEC_CDE = c1.SEC_CDE 
+	AND SUBSTR(CAST(1000000+a1.SEC_CDE AS CHAR(7)),2) = b1.SEC_CDE 
+	AND SUBSTR(CAST(1000000+a1.SEC_CDE AS CHAR(7)),2) = c1.SEC_CDE 
 	AND B1.MKT_SORT=C1.MKT_SORT 
 	AND C1.LIST_DATE<='${TXDATE}' 
 	--AND C1.LIST_DATE<>'00010101' 

@@ -117,7 +117,7 @@ FROM
 		WHERE 
 			SEC_CTG='90' AND MKT_SORT='1' 
 			AND S_DATE <= '${TXDATE}' AND E_DATE > '${TXDATE}'
-			AND (LEFT(SEC_CDE, 4) = '1189' OR SEC_NAME LIKE '%国开%')
+			AND (SUBSTR(SEC_CDE, 0, 5) = '1189' OR SEC_NAME LIKE '%国开%')
 
 		)T2
 		ON 
