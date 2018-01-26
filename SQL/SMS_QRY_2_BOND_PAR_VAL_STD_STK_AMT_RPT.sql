@@ -17,7 +17,7 @@
 */
 
 delete from ${NSSMSMART}.SMS_QRY_2_BOND_PAR_VAL_STD_STK_AMT_RPT
-where stat_date = '${TXDATE}'
+where stat_date = cast('${TXDATE}' as date format 'YYYYMMDD')
 ;
 
 .IF ERRORCODE <> 0 THEN .QUIT 12;
@@ -25,7 +25,7 @@ where stat_date = '${TXDATE}'
 INSERT INTO ${NSSMSMART}.SMS_QRY_2_BOND_PAR_VAL_STD_STK_AMT_RPT
 --沪市
 SELECT 
-	'${TXDATE}' AS STAT_DATE
+	cast('${TXDATE}' as date format 'YYYYMMDD') AS STAT_DATE
 	,A1.SEC_CDE AS SEC_CDE
 	,A1.SEC_NAME
 	,SUM(A1.PLG_VOL)/1E8 AS BOND_PAR_VAL
@@ -49,14 +49,14 @@ FROM
 			${NSOVIEW}.CSDC_INTG_SEC_INFO
 		WHERE 
 			SUBSTR(SEC_CTG,1,1)='3' AND MKT_SORT='0'
-			AND S_DATE <= '${TXDATE}' AND E_DATE > '${TXDATE}'
+			AND S_DATE <= cast('${TXDATE}' as date format 'YYYYMMDD') AND E_DATE > cast('${TXDATE}' as date format 'YYYYMMDD')
 		)T2
 		
 		ON 
 			SUBSTR(CAST(1000000+T1.SEC_CDE AS CHAR(7)),2)=T2.SEC_CDE
 	WHERE 
 		T1.HOLD_TYPE='ZYQ' --质押券
-		AND T1.PRCS_DATE='${TXDATE}' 
+		AND T1.PRCS_DATE=cast('${TXDATE}' as date format 'YYYYMMDD') 
 	GROUP BY 1,2
 	) A1
 	
@@ -64,12 +64,12 @@ FROM
 	
 	(
 	SELECT 
-		SUBSTR(CAST(1000000+SEC_CDE AS CHAR(7)),2)
+		SUBSTR(CAST(1000000+SEC_CDE AS CHAR(7)),2) as SEC_CDE
 		,CRENT_RATE
 	FROM 
 		${NSOVIEW}.CSDC_H_BPR_STD_STK_RT
 	WHERE 
-		S_DATE<='${TXDATE}' AND E_DATE>'${TXDATE}'
+		S_DATE<=cast('${TXDATE}' as date format 'YYYYMMDD') AND E_DATE>cast('${TXDATE}' as date format 'YYYYMMDD')
 	)A2
 	
 	ON 
@@ -78,10 +78,9 @@ GROUP BY 1,2,3
 
 UNION ALL
 
-
 --深市
 SELECT
-	'${TXDATE}' AS STAT_DATE
+	cast('${TXDATE}' as date format 'YYYYMMDD') AS STAT_DATE
 	,SUBSTR(CAST(1000000+A1.SEC_CDE AS CHAR(7)),2) AS SEC_CDE
 	,A1.SEC_NAME
 	,SUM(A1.PLG_VOL)/1E8 AS BOND_PAR_VAL
@@ -105,7 +104,7 @@ FROM
 			${NSOVIEW}.CSDC_INTG_SEC_INFO
 		WHERE 
 			SUBSTR(SEC_CTG,1,1)='3' AND MKT_SORT='1' 
-			AND S_DATE <= '${TXDATE}' AND E_DATE > '${TXDATE}'
+			AND S_DATE <= cast('${TXDATE}' as date format 'YYYYMMDD') AND E_DATE > cast('${TXDATE}' as date format 'YYYYMMDD')
 
 		UNION ALL 
 
@@ -116,14 +115,14 @@ FROM
 			${NSOVIEW}.CSDC_INTG_SEC_INFO
 		WHERE 
 			SEC_CTG='90' AND MKT_SORT='1' 
-			AND S_DATE <= '${TXDATE}' AND E_DATE > '${TXDATE}'
+			AND S_DATE <= cast('${TXDATE}' as date format 'YYYYMMDD') AND E_DATE > cast('${TXDATE}' as date format 'YYYYMMDD')
 			AND (SUBSTR(SEC_CDE, 0, 5) = '1189' OR SEC_NAME LIKE '%国开%')
 
 		)T2
 		ON 
 			SUBSTR(CAST(1000000+T1.SEC_CDE AS CHAR(7)),2)=T2.SEC_CDE
 	WHERE 
-		S_DATE<='${TXDATE}' AND E_DATE>'${TXDATE}'
+		S_DATE<=cast('${TXDATE}' as date format 'YYYYMMDD') AND E_DATE>cast('${TXDATE}' as date format 'YYYYMMDD')
 	GROUP BY 1,2
 	)A1
 	
@@ -136,8 +135,8 @@ FROM
 	FROM 
 		${NSOVIEW}.CSDC_S_SEC_CNVTR_HIS
 	WHERE 
-		S_DATE<='${TXDATE}' AND E_DATE>'${TXDATE}'
-		AND APPLY_DATE='${TXDATE}'
+		S_DATE<=cast('${TXDATE}' as date format 'YYYYMMDD') AND E_DATE>cast('${TXDATE}' as date format 'YYYYMMDD')
+		AND APPLY_DATE=cast('${TXDATE}' as date format 'YYYYMMDD')
 
 	)A2
 	

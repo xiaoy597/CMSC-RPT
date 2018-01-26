@@ -27,20 +27,6 @@ DELETE FROM ${NSSMSMART}.SMS_QRY_2_VLD_OPEN_TRAD_HOLD_OAP_RPT WHERE STAT_DATE = 
 
 .IF ERRORCODE <> 0 THEN .QUIT 12;
 
-CREATE VOLATILE MULTISET TABLE V_UNI_ACCT_NBR_2 AS						
-(
-SELECT 
-	OAP_ACCT_NBR,
-	MIN(a.OPN_ACCT_DATE) AS open_date,
-	MAX(a.CLS_ACCT_DATE) AS cnl_date
-FROM 
-	${NSOVIEW}.CSDC_INTG_UAP_SEC_ACCT a
-WHERE 
-	a.s_date <= '${TXDATE}' AND a.e_date > '${TXDATE}'
-	AND a.SEC_ACCT_SORT IN ('11', '21')
-GROUP BY 1
-) WITH DATA PRIMARY INDEX ( OAP_ACCT_NBR ) ON COMMIT PRESERVE ROWS ;
-
 INSERT INTO ${NSSMSMART}.SMS_QRY_2_VLD_OPEN_TRAD_HOLD_OAP_RPT
 SELECT
 STAT_DATE
@@ -52,11 +38,11 @@ FROM
 (
 -- 有效一码通
 SELECT
-'${TXDATE}' as STAT_DATE
-,count(distinct a2.OAP_ACCT_NBR) as VLD_OAP_CNT
-,0 as OPEN_OAP_CNT
-,0 as TRAD_OAP_CNT
-,0 as HOLD_OAP_CNT
+cast('${TXDATE}' as date format 'YYYYMMDD') as STAT_DATE
+,cast(count(distinct a2.OAP_ACCT_NBR) as decimal(24,0)) as VLD_OAP_CNT
+,cast(0 as decimal(24,0)) as OPEN_OAP_CNT
+,cast(0 as decimal(24,0)) as TRAD_OAP_CNT
+,cast(0 as decimal(24,0)) as HOLD_OAP_CNT
 FROM
 	(
 		SELECT 
@@ -64,7 +50,7 @@ FROM
 		FROM 
 			${NSOVIEW}.CSDC_INTG_SEC_ACCT
 		WHERE
-			s_date<='${TXDATE}' AND e_date>'${TXDATE}'
+			s_date<=cast('${TXDATE}' as date format 'YYYYMMDD') AND e_date>cast('${TXDATE}' as date format 'YYYYMMDD')
 			AND SEC_ACCT_SORT IN ('1')
 			AND (sec_acct_sts='1' OR sec_acct_sts='4') 
 			--AND mkt_type='0'
@@ -77,7 +63,7 @@ FROM
 		FROM 
 			${NSOVIEW}.CSDC_INTG_UAP_SEC_ACCT
 		WHERE 
-			s_date<='${TXDATE}' AND e_date>'${TXDATE}'
+			s_date<=cast('${TXDATE}' as date format 'YYYYMMDD') AND e_date>cast('${TXDATE}' as date format 'YYYYMMDD')
 	)a2
 	ON a1.sec_acct=a2.SEC_ACCT_CDE
 
@@ -85,13 +71,25 @@ UNION ALL
 
 -- 新开一码通
 SELECT 
-'${TXDATE}' as STAT_DATE
-,COUNT(DISTINCT OAP_ACCT_NBR) as VLD_OAP_CNT
-,0 as OPEN_OAP_CNT
-,0 as TRAD_OAP_CNT
-,0 as HOLD_OAP_CNT
+cast('${TXDATE}' as date format 'YYYYMMDD') as STAT_DATE
+,cast(0 as decimal(24,0)) as VLD_OAP_CNT
+,cast(COUNT(DISTINCT OAP_ACCT_NBR) as decimal(24,0)) as OPEN_OAP_CNT
+,cast(0 as decimal(24,0)) as TRAD_OAP_CNT
+,cast(0 as decimal(24,0)) as HOLD_OAP_CNT
 FROM 
-	V_UNI_ACCT_NBR_2
+(
+		SELECT 
+			OAP_ACCT_NBR,
+			MIN(a.OPN_ACCT_DATE) AS open_date,
+			MAX(a.CLS_ACCT_DATE) AS cnl_date
+		FROM 
+			${NSOVIEW}.CSDC_INTG_UAP_SEC_ACCT a
+		WHERE 
+			a.s_date <= cast('${TXDATE}' as date format 'YYYYMMDD') 
+			AND a.e_date > cast('${TXDATE}' as date format 'YYYYMMDD')
+			AND a.SEC_ACCT_SORT IN ('11', '21')
+		GROUP BY 1
+)t
 WHERE 
 	open_date = cast('${TXDATE}' as date format 'YYYYMMDD')
 
@@ -99,11 +97,11 @@ UNION ALL
 
 -- 参与交易一码通
 SELECT 
-'${TXDATE}' as STAT_DATE
-,0 as VLD_OAP_CNT
-,0 as OPEN_OAP_CNT
-,COUNT(DISTINCT OAP_ACCT_NBR) as TRAD_OAP_CNT
-,0 as HOLD_OAP_CNT
+cast('${TXDATE}' as date format 'YYYYMMDD') as STAT_DATE
+,cast(0 as decimal(24,0)) as VLD_OAP_CNT
+,cast(0 as decimal(24,0)) as OPEN_OAP_CNT
+,cast(COUNT(DISTINCT OAP_ACCT_NBR) as decimal(24,0)) as TRAD_OAP_CNT
+,cast(0 as decimal(24,0)) as HOLD_OAP_CNT
 FROM
 	(
 	SELECT 											
@@ -114,7 +112,7 @@ FROM
 		${NSOVIEW}.CSDC_H_SEC_TRAN a1										 
 		,${NSOVIEW}.CSDC_INTG_SEC_INFO c1											
 	WHERE 
-		c1.s_date <= '${TXDATE}' AND c1.e_date > '${TXDATE}'	        										
+		c1.s_date <= cast('${TXDATE}' as date format 'YYYYMMDD') AND c1.e_date > cast('${TXDATE}' as date format 'YYYYMMDD')	        										
 		AND SUBSTR(CAST(1000000+a1.SEC_CDE AS CHAR(7)),2) = c1.sec_cde											
 		AND a1.cap_type = 'PT' AND a1.negt_type = '0'												
 		AND a1.EQUT_TYPE NOT IN ('DF', 'DX', 'HL')												
@@ -122,7 +120,7 @@ FROM
 		AND a1.TRANS_TYPE IN ('00A','001') 									
 		AND a1.negt_type = '0'									
 		AND a1.TRANS_VOL <> 0									
-		AND a1.trad_date = '${TXDATE}'										
+		AND a1.trad_date = cast('${TXDATE}' as date format 'YYYYMMDD')										
 		AND c1.SEC_CTG = '11' AND c1.MKT_SORT='0'
 	UNION ALL	
 	SELECT 											
@@ -133,29 +131,29 @@ FROM
 		${NSOVIEW}.CSDC_S_SEC_TRAN a1										
 		,${NSOVIEW}.CSDC_INTG_SEC_INFO c1											
 	WHERE 
-		c1.s_date <= '${TXDATE}' AND c1.e_date > '${TXDATE}'										
+		c1.s_date <= cast('${TXDATE}' as date format 'YYYYMMDD') AND c1.e_date > cast('${TXDATE}' as date format 'YYYYMMDD')										
 		AND SUBSTR(CAST(1000000+a1.SEC_CDE AS CHAR(7)),2) = c1.sec_cde												
 		AND c1.SEC_CTG = '11'										
 		AND c1.MKT_SORT = '1'										
 		AND a1.SHDR_ACCT <> '0088888889'										
 		AND a1.trad_vol <> 0										
-		AND a1.trad_date = '${TXDATE}'	
+		AND a1.trad_date = cast('${TXDATE}' as date format 'YYYYMMDD')	
 	) a		
 	INNER JOIN ${NSOVIEW}.CSDC_INTG_UAP_SEC_ACCT b
 	ON 
 		a.SHDR_ACCT	= b.SEC_ACCT_CDE
 		AND a.MKT_SORT = b.TRAD_PLAC
-		AND b.s_date <= '${TXDATE}' 
-		AND b.e_date > '${TXDATE}'		
+		AND b.s_date <= cast('${TXDATE}' as date format 'YYYYMMDD') 
+		AND b.e_date > cast('${TXDATE}' as date format 'YYYYMMDD')		
 
 UNION ALL
 -- 持有一码通
 SELECT
-'${TXDATE}' as STAT_DATE
-,0 as VLD_OAP_CNT
-,0 as OPEN_OAP_CNT
-,0 as TRAD_OAP_CNT
-,COUNT(DISTINCT OAP_ACCT_NBR) as HOLD_OAP_CNT 
+cast('${TXDATE}' as date format 'YYYYMMDD') as STAT_DATE
+,cast(0 as decimal(24,0)) as VLD_OAP_CNT
+,cast(0 as decimal(24,0)) as OPEN_OAP_CNT
+,cast(0 as decimal(24,0)) as TRAD_OAP_CNT
+,cast(COUNT(DISTINCT OAP_ACCT_NBR) as decimal(24,0)) as HOLD_OAP_CNT 
 FROM
 (
 	SELECT 
@@ -181,9 +179,9 @@ FROM
 	AND a1.EQUT_TYPE = d1.EQUT_TYPE 
 	AND a1.SHDR_ACCT NOT IN ('B880859746','B880810718','B880969127','B880969135') 
 	AND a1.HOLD_VOL <> 0 
-	AND b1.TRAD_DATE = '${TXDATE}' 
+	AND b1.TRAD_DATE = cast('${TXDATE}' as date format 'YYYYMMDD') 
 	AND c1.SEC_CTG = '11' 
-	AND C1.LIST_DATE<='${TXDATE}' 
+	AND C1.LIST_DATE<=cast('${TXDATE}' as date format 'YYYYMMDD') 
 	--AND C1.LIST_DATE<>'00010101' 
 	AND d1.trad_mkt = '0' 
 	--AND d1.negt_indc IN ('01','02','03') 
@@ -208,7 +206,7 @@ UNION ALL
 	AND SUBSTR(CAST(1000000+a1.SEC_CDE AS CHAR(7)),2) = b1.SEC_CDE 
 	AND SUBSTR(CAST(1000000+a1.SEC_CDE AS CHAR(7)),2) = c1.SEC_CDE 
 	AND B1.MKT_SORT=C1.MKT_SORT 
-	AND C1.LIST_DATE<='${TXDATE}' 
+	AND C1.LIST_DATE<=cast('${TXDATE}' as date format 'YYYYMMDD') 
 	--AND C1.LIST_DATE<>'00010101' 
 	AND B1.MKT_SORT='0' 
 	AND a1.cap_type = d1.cap_type 
@@ -217,13 +215,14 @@ UNION ALL
 	AND a1.EQUT_TYPE = d1.EQUT_TYPE 
 	AND a1.SHDR_ACCT NOT IN ('B880859746','B880810718','B880969127','B880969135') 
 	AND a1.HOLD_VOL <> 0 
-	AND b1.TRAD_DATE = '${TXDATE}'
+	AND b1.TRAD_DATE = cast('${TXDATE}' as date format 'YYYYMMDD')
 	AND c1.SEC_CTG = '11' 
 	AND d1.trad_mkt = '0' 
 	--AND d1.negt_indc IN ('01','02','03') 
 	AND d1.negt_indc = '01'
 	AND a1.SHDR_ACCT NOT IN (SELECT DISTINCT GUART_ACCT FROM ${NSOVIEW}.CSDC_H_CRDT_ACCT_RLTN 
-							WHERE s_date<='${TXDATE}' AND e_date>'${TXDATE}' 
+							WHERE s_date<=cast('${TXDATE}' as date format 'YYYYMMDD') 
+							AND e_date>cast('${TXDATE}' as date format 'YYYYMMDD') 
 							AND CRDT_ACCT IS NOT NULL) 
 	GROUP BY 1,2
 
@@ -250,10 +249,10 @@ UNION ALL
 	AND a1.STK_CHRC = d1.STK_CHRC 
 	AND a1.SHDR_ACCT <> '0088888889' 
 	AND a1.HOLD_VOL <> 0 
-	AND b1.TRAD_DATE = '${TXDATE}'
+	AND b1.TRAD_DATE = cast('${TXDATE}' as date format 'YYYYMMDD')
 	AND c1.SEC_CTG = '11' 
-	AND C1.LIST_DATE<='${TXDATE}' 
-	AND C1.LIST_DATE<>'00010101' 
+	AND C1.LIST_DATE<=cast('${TXDATE}' as date format 'YYYYMMDD') 
+	AND C1.LIST_DATE<>cast('00010101' as date format 'YYYYMMDD') 
 	--AND c1.trad_mkt = '0' 
 	--AND d1.negt_indc IN ('01','02','03') 
 	AND d1.negt_indc = '01'
@@ -265,8 +264,8 @@ ON
 	AND a.mkt_sort = b.TRAD_PLAC
 	AND sec_acct_sts IN ('00', '01')
 	AND CUST_SORT IN ('0', '1', '2')
-	AND b.s_date <= '${TXDATE}' 
-	AND b.e_date > '${TXDATE}'
+	AND b.s_date <= cast('${TXDATE}' as date format 'YYYYMMDD') 
+	AND b.e_date > cast('${TXDATE}' as date format 'YYYYMMDD')
 ) TBL
 GROUP BY 1
 ;
